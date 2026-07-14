@@ -33,4 +33,4 @@ jobs:
       - name: Build sample against published CacheDB package
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: mvn -B clean verify
+        run: mvn -B clean verify -Pprovider-integration
