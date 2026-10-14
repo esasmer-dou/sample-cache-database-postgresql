@@ -3,14 +3,14 @@
 English | [Türkçe](README.tr.md)
 
 [![Consumer build](https://github.com/esasmer-dou/sample-cache-database-postgresql/actions/workflows/consumer-build.yml/badge.svg?branch=main)](https://github.com/esasmer-dou/sample-cache-database-postgresql/actions/workflows/consumer-build.yml)
-[![CacheDB 0.10.1](https://img.shields.io/badge/CacheDB-0.10.1-0b7285.svg)](https://github.com/esasmer-dou/cache-database/releases/tag/v0.10.1)
+[![CacheDB 0.13.0](https://img.shields.io/badge/CacheDB-0.13.0-0b7285.svg)](https://github.com/esasmer-dou/cache-database/releases/tag/v0.13.0)
 
 A production-oriented Spring Boot REST API that demonstrates CacheDB with Redis
 8 and PostgreSQL. The sample is intentionally explicit: operational routes use
 a bounded Redis active data set, durable history stays in PostgreSQL, and
 growing lists use projections instead of full aggregates.
 
-> This release consumes the immutable CacheDB `0.10.1` package from the public
+> This release consumes the immutable CacheDB `0.13.0` package from the public
 > CacheDB Maven repository. It requires no GitHub token and does not require a
 > local CacheDB source checkout.
 
@@ -19,6 +19,22 @@ route: seed durable PostgreSQL rows, read the bounded archive route, warm the
 matching Redis projection, read the active route, and inspect coverage and
 durability signals. The sample does not hide a PostgreSQL query behind a Redis
 miss.
+
+## CacheDB 0.13.0 Upgrade
+
+The sample POM aligns the BOM, provider starter, annotation processor and doctor
+plugin at `0.13.0`. Rebuild the sample to regenerate its bindings.
+The POM also sets `jedis.version=5.2.0`; the Spring Boot parent would otherwise
+select an older driver that lacks the required pipeline API.
+
+- Existing REST, archive, projection and warm routes retain their explicit behavior.
+- `hotEntityLimit=0` now disables entity admission; use `-1` only for a deliberate unbounded count policy. The default remains 1,000.
+- Use `Boolean` for nullable SQL booleans; primitive `boolean` rejects SQL NULL.
+- Redis Cluster, atomic write batches and indexed snapshot pages are optional framework APIs, not automatically enabled sample endpoints.
+
+Read the [release notes](https://github.com/esasmer-dou/cache-database/blob/main/docs/releases/v0.13.0.md)
+and [bounded operation contracts](https://github.com/esasmer-dou/cache-database/blob/main/docs/bounded-runtime-operations.md)
+before adding those APIs. Package availability does not certify your application's production topology.
 
 ## Start Here
 
@@ -115,7 +131,8 @@ sources as part of the sample build.
 ```xml
 <properties>
     <java.version>21</java.version>
-    <cachedb.version>0.10.1</cachedb.version>
+<cachedb.version>0.13.0</cachedb.version>
+<jedis.version>5.2.0</jedis.version>
 </properties>
 
 <dependencyManagement>
@@ -205,7 +222,7 @@ no Maven `settings.xml`, username, or token is required.
 ### 1. Resolve the published CacheDB package
 
 Validate the sample directly. Maven resolves the BOM, starter, annotation
-processor, and doctor plugin anonymously from the immutable `0.10.1` package:
+processor, and doctor plugin anonymously from the immutable `0.13.0` package:
 
 ```powershell
 mvn -U -DskipTests validate
@@ -233,6 +250,10 @@ The compose file starts:
 
 The `demo` profile is required for local schema initialization, seed endpoints,
 warm endpoints, scheduled warm, and the admin UI.
+
+Spring owns the provider-specific `schema.sql` in this sample. CacheDB starts
+after that script and validates the result with `VALIDATE_ONLY`; it does not
+compete with Spring for DDL ownership.
 
 ```powershell
 $env:SPRING_PROFILES_ACTIVE = "demo"
