@@ -10,3 +10,8 @@ target/
 .env.*
 !.env.example
 docker-compose.override.yml
+.codex/
+PROJECT_MEMORY.md
+**/PROJECT_MEMORY.md
+MEMORY.md
+**/MEMORY.md
